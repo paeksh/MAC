@@ -14,9 +14,9 @@ typedef enum {
     LEVEL_INVALID = -1
 } level_t;
 
-level_t parse_level(const char *s){ //파일 이름 파싱 -> 레벨 연결
+// level_t parse_level(const char *s){ //파일 이름 파싱 -> 레벨 연결
     
-}
+// }
 
 //현재 실행중인 유저의 username 얻기
 const char *get_current_username(void){
@@ -66,15 +66,52 @@ level_t get_user_clearance(const char *username){
 }
 
 level_t get_file_clearance(const char *filename){
-    
+
+    char *name = strtok(filename, ".");
+
+    if (strcpy(name, "secret")==0){
+        return SECRET;
+    }
+    else if (strcpy(name, "top_secret") == 0){
+        return TOP_SECRET;
+    }
+    else if (strcpy(name, "unclassified")==0){
+        return UNCLASSIFIED;
+    }
+    else if (strcpy(name, "confidential")==0){
+        return CONFIDENTIAL;
+    } 
+    else {
+        return LEVEL_INVALID;
+    }
 }
 
 void do_read(const char*filename){
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL){
+        perror("fopen");
+        return -1;
+    }
 
+    char buf[1024];
+    size_t n;
+    while ((n=fread(buf, 1, sizeof(buf), fp))>0){
+        fwrite(buf, 1, n, stdout);
+    } 
+    fclose(fp);
+    return 0;
 }
 
-void do_write(const char*filename){
+void do_write(const char*filename, const char*data){
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL){
+        perror("fopen");
+        return -1;
+    }
 
+    fprintf(fp, "%s\n", data);
+    fclose(fp);
+    return 0;
 }
 
 void logging(const char*username, const char*command, const char*filename){
@@ -100,6 +137,7 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
 
     const char *command = argv[1];
     const char *filename = argv[2];
+    const char *data = NULL;
 
     if (strcmp(command, "read")==0){
         if (argv!=3){ //read이면 인자가 3개여야함, 아니면 오류
@@ -110,7 +148,7 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
         if (argv!=4){ //write이면 인자가 4개여야함, 아니면 오류
             return 1;
         }
-        const char *data = argv[3];
+        data = argv[3];
     }
     else{
         return 1; //아예 오류
@@ -138,7 +176,7 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
     }
     else if (strcmp(command, "write") == 0){
         if (user_level <= file_level){
-            do_write(filename);
+            do_write(filename, data);
         }
         else {
             printf("ACCESS DENIED\n");
@@ -150,9 +188,6 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
 
     //로그 기록
     logging(username, command, filename);
-
-
-
 
     return 0;
 }
