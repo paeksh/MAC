@@ -8,6 +8,15 @@ CLI 도구 MAC 을 구현하는 코드
     - mac.policy 파일에 {유저:보안등급} 형식의 문자열로 저장되어 있고, root 권한으로 읽을수 있다
     - secret.data, top_secret.data, unclassified.data, confidential.data 네 개의 파일이 제공된다
 
+권한 세팅
+    - chown root:root *.data mac.policy 
+        >> chown은 소유자와 그룹을 바꾸는 명령어.
+        >> 소유자:그룹 둘다 root으로 바꿈
+        >> *.data : .데이터로 끝나는 모든 파일
+    - chmod 0640 <files>
+        >> chmod는 권한을 바꾸는 명령어.
+        >> 0640은 -rw-r------을 숫자로 표현한것
+
 ============================================
 
 level_t enumerate

@@ -1,0 +1,5 @@
+mac
+*.o
+*.log
+*.data
+mac.policy

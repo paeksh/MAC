@@ -14,9 +14,17 @@ typedef enum {
     LEVEL_INVALID = -1
 } level_t;
 
-// level_t parse_level(const char *s){ //파일 이름 파싱 -> 레벨 연결
+level_t parse_level(const char *s){ 
+    //파일 이름 파싱 -> 레벨 연결 
+    //get_user_clearance에서 쓰는용
+
+    if (strcmp(s, "UNCLASSIFIED")==0) return UNCLASSIFIED;
+    else if (strcmp(s, "CONFIDENTIAL")==0) return CONFIDENTIAL;
+    else if (strcmp(s, "SECRET")==0) return SECRET;
+    else if (strcmp(s, "TOP_SECRET")==0) return TOP_SECRET;
+    else return LEVEL_INVALID;
     
-// }
+}
 
 //현재 실행중인 유저의 username 얻기
 const char *get_current_username(void){
@@ -29,13 +37,12 @@ const char *get_current_username(void){
 }
 
 void drop_privilege(void){
-    uid_t e_uid = geteuid(); //유저의 effective uid 얻기
     if (setegid(getgid())!=0){
-        perrror("setegid error");
+        perror("setegid error");
         exit(1);
     }
     if (seteuid(getuid())!=0){
-        perrror("seteuid error");
+        perror("seteuid error");
         exit(1);
     }
 }
@@ -51,7 +58,7 @@ level_t get_user_clearance(const char *username){
     level_t result = LEVEL_INVALID;
 
     while (fgets(line, sizeof(line), fp)!=NULL){ //문서 끝까지 루프
-        line[strcspn(line, "\n")] = '\0'; //개행문자 제거
+        line[strcspn(line, "\r\n")] = '\0'; //개행문자 제거
 
         char *name = strtok(line, ":");
         char *level_str = strtok(NULL, ":");
@@ -63,22 +70,22 @@ level_t get_user_clearance(const char *username){
             break;
         }
     }
+
+    return result;
 }
 
 level_t get_file_clearance(const char *filename){
 
-    char *name = strtok(filename, ".");
-
-    if (strcpy(name, "secret")==0){
+    if (strcmp(filename, "secret.data")==0){
         return SECRET;
     }
-    else if (strcpy(name, "top_secret") == 0){
+    else if (strcmp(filename, "top_secret.data") == 0){
         return TOP_SECRET;
     }
-    else if (strcpy(name, "unclassified")==0){
+    else if (strcmp(filename, "unclassified.data")==0){
         return UNCLASSIFIED;
     }
-    else if (strcpy(name, "confidential")==0){
+    else if (strcmp(filename, "confidential.data")==0){
         return CONFIDENTIAL;
     } 
     else {
@@ -86,7 +93,7 @@ level_t get_file_clearance(const char *filename){
     }
 }
 
-void do_read(const char*filename){
+int do_read(const char*filename){
     FILE *fp = fopen(filename, "r");
     if (fp == NULL){
         perror("fopen");
@@ -102,8 +109,8 @@ void do_read(const char*filename){
     return 0;
 }
 
-void do_write(const char*filename, const char*data){
-    FILE *fp = fopen(filename, "w");
+int do_write(const char*filename, const char*data){
+    FILE *fp = fopen(filename, "a"); //w로 열면 기존 내용 덮어씀! 반드시 append (뒤에 추가))
     if (fp == NULL){
         perror("fopen");
         return -1;
@@ -140,12 +147,12 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
     const char *data = NULL;
 
     if (strcmp(command, "read")==0){
-        if (argv!=3){ //read이면 인자가 3개여야함, 아니면 오류
+        if (argc!=3){ //read이면 인자가 3개여야함, 아니면 오류
             return 1;
         }
     } 
     else if (strcmp(command, "write") == 0){
-        if (argv!=4){ //write이면 인자가 4개여야함, 아니면 오류
+        if (argc!=4){ //write이면 인자가 4개여야함, 아니면 오류
             return 1;
         }
         data = argv[3];
@@ -165,13 +172,16 @@ int main(int argc, char *argv[]){ //argc : 인자개수, argv : 인자배열
     //파일 보안 등급 조회
     level_t file_level = get_file_clearance(filename);
     
-    //접근허용 여부 판단
-    if (strcmp(command, "read") == 0){
+    //접근여부 판단
+    if (user_level == LEVEL_INVALID){
+        printf("ACCESS DENIED\n"); // invalid 한 유저는 권한 비교 전에 아예 차단
+    }
+    else if (strcmp(command, "read") == 0){
         if (user_level >= file_level){
             do_read(filename);
         }
         else{
-            prinf("ACCESS DENIED\n");
+            printf("ACCESS DENIED\n");
         }
     }
     else if (strcmp(command, "write") == 0){
