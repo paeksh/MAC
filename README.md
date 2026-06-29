@@ -34,14 +34,17 @@
 ----------------------------------------------------------------
 
   level_t (enum)
+  
     - 4개의 등급을 숫자로 구분한다. (등급이 매겨지지 않으면 -1)
 
   drop_privilege()
+  
     - if 안에서 setegid(getgid())을 호출하고 비교까지 함
     - 먼저 그룹을 권한 하락시킨 다음에 유저 권한을 하락시켜야 함.
       순서 중요
 
   get_user_clearance()
+  
     - 파일을 한 줄씩 읽어 ":" 를 기준으로 strtok()를 이용해
       자르고, username을 매칭 후 그 유저의 보안등급을 반환함
     - char *strtok(char *str, const char *delim);
@@ -49,6 +52,7 @@
           이후 호출부터는 NULL을 줌
 
   do_read()
+  
     - 파일을 읽기 모드로 열고, fread로 읽은 만큼을 fwrite로
       stdout에 출력한 뒤 fclose로 닫음
     - 호출 전 메인에서 권한 검사를 하므로, 허용된 경우에만 호출됨
@@ -56,12 +60,14 @@
       euid가 root인 상태에서 호출되어야 접근 가능
 
   do_write()
+  
     - fopen을 append 모드로 열어 기존 내용을 보존하며 뒤에 추가함
       (write 모드 "w"는 기존 내용을 덮어쓰므로 사용하지 않는다)
     - fprintf로 data 다음에 개행을 붙여 기록한 뒤 fclose로 닫음
     - do_read와 이하동문
 
   logging()
+  
     - 사용자 이름, read/write, 파일 이름을 받아 <username>.log
       파일에 (없으면 생성) <command> <filename> 형식으로 기록한다
     - 여기서는 fopen()말고 open()을 써야 한다. 왜냐하면 과제
